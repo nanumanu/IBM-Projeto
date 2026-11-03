@@ -347,6 +347,24 @@ def build_case_dossier(account_id: str) -> dict:
     d = _dossier(w, account_id)
     evidence = [{"label": s["label"], "strength": s["value"], "evidence": s["evidence"]}
                 for s in sorted(d["risk"]["signals"], key=lambda s: -s["value"]) if s["value"] > 0]
+    # texto pronto para exibir: o agente copia este bloco antes de pedir a decisão
+    disputes_total = sum(x["amount"] for x in d["disputes"])
+    lines = [f"Dossiê do caso CASO-{account_id[4:]} (conta {account_id})",
+             f"Score de risco: {d['risk']['score']:g}/100".replace(".", ","),
+             f"Recomendação: {d['recommendation']}",
+             f"Justificativa: {d['justification']}",
+             "Evidências:"]
+    lines += [f"- {e['label']}: {e['evidence']}" for e in evidence]
+    lines.append(f"Rastro do dinheiro: {d['network']['trail_summary']}")
+    if d["disputes"]:
+        lines.append(f"Contestações: {len(d['disputes'])}, total de {_brl(disputes_total)}.")
+    if d["proposed_actions"]:
+        lines.append("Ações propostas (só serão executadas com a aprovação do analista):")
+        for a in d["proposed_actions"]:
+            extra = a.get("reason") or (_brl(a["amount"]) if "amount" in a else "")
+            lines.append(f"- {a['action_id']} {a['type']} {a['target']}" + (f" ({extra})" if extra else ""))
+    else:
+        lines.append("Nenhuma ação proposta.")
     return {
         "case_id": f"CASO-{account_id[4:]}",
         "account_id": account_id,
@@ -360,6 +378,7 @@ def build_case_dossier(account_id: str) -> dict:
                      for x in d["disputes"]],
         "disputes_total": round(sum(x["amount"] for x in d["disputes"]), 2),
         "proposed_actions": d["proposed_actions"],
+        "display_text": "\n".join(lines),
         "status": "aguardando_aprovacao_do_analista",
         "checklist": [
             "Confirmar com ao menos uma instituição de origem se houve relato de golpe.",
