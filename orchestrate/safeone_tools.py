@@ -155,6 +155,8 @@ def _assess(w: dict, account_id: str) -> dict:
         "above_threshold": score >= THRESHOLD,
         "signals": [{"name": k, "label": SIGNAL_LABELS[k], "value": round(v, 2),
                      "weight": WEIGHTS[k], "evidence": e} for k, (v, e) in signals.items()],
+        # só os sinais que de fato contribuíram para o score (value > 0)
+        "active_signals": [f"{SIGNAL_LABELS[k]}: {e}" for k, (v, e) in signals.items() if v > 0],
     }
 
 
@@ -278,6 +280,7 @@ def investigate_account(account_id: str) -> dict:
         "network": _network(w, account_id),
         "disputes": [{"transaction_id": d["transaction_id"], "amount": d["amount"], "reason": d["reason"]}
                      for d in w["disputes"] if d["dst"] == account_id],
+        "disputes_total": round(sum(d["amount"] for d in w["disputes"] if d["dst"] == account_id), 2),
     }
 
 
@@ -343,6 +346,7 @@ def build_case_dossier(account_id: str) -> dict:
         "money_trail": d["network"]["money_trail"],
         "disputes": [{"transaction_id": x["transaction_id"], "amount": x["amount"], "reason": x["reason"]}
                      for x in d["disputes"]],
+        "disputes_total": round(sum(x["amount"] for x in d["disputes"]), 2),
         "proposed_actions": d["proposed_actions"],
         "status": "aguardando_aprovacao_do_analista",
         "checklist": [
