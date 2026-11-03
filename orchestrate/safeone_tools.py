@@ -148,9 +148,11 @@ def _assess(w: dict, account_id: str) -> dict:
         "pass_through": (_clamp((ratio - 0.5) / 0.4) if inflow else 0.0,
                          f"Repassou {ratio:.0%} do que recebeu (entrou {_brl(inflow)}, saiu {_brl(outflow)})."),
         "new_account": (1.0 if age < 30 else 0.5 if age < 90 else 0.0, f"Conta aberta há {age} dias."),
-        "disputes": (_clamp(n_disp / 3), f"{n_disp} transferência(s) recebida(s) contestada(s)."),
+        "disputes": (_clamp(n_disp / 3), "1 transferência recebida contestada." if n_disp == 1
+                     else f"{n_disp} transferências recebidas contestadas." if n_disp
+                     else "Nenhuma transferência recebida contestada."),
         "inbound_spike": (_clamp((spike - 3) / 7),
-                          f"Entrada {spike:.1f}".replace(".", ",") + "x acima do normal da conta."),
+                          f"Recebeu {spike:.1f}".replace(".", ",") + "x mais do que o normal da conta."),
     }
     score = 100 * sum(WEIGHTS[k] * v for k, (v, _) in signals.items()) / sum(WEIGHTS.values())
     return {
@@ -343,6 +345,17 @@ def investigate_account(account_id: str) -> dict:
 
 
 # ----------------------------------------------------------------- Decisão
+REC_LABELS = {"bloquear_e_recuperar": "Bloquear e recuperar os valores",
+              "bloqueio_cautelar_e_revisao": "Bloqueio cautelar e revisão", "monitorar": "Monitorar"}
+
+
+def _action_text(a: dict) -> str:
+    # descrição legível de uma ação proposta, para os textos prontos
+    if a["type"] == "bloquear_conta":
+        return f"Bloquear a conta {a['target']}"
+    return f"Solicitar a devolução da transferência {a['target']}"
+
+
 def _dossier(w: dict, account_id: str) -> dict:
     risk = _assess(w, account_id)
     net = _network(w, account_id)
@@ -397,7 +410,7 @@ def build_case_dossier(account_id: str) -> dict:
     disputes_total = sum(x["amount"] for x in d["disputes"])
     lines = [f"Dossiê do caso CASO-{account_id[4:]} (conta {account_id})",
              f"Score de risco: {d['risk']['score']:g}/100".replace(".", ","),
-             f"Recomendação: {d['recommendation']}",
+             f"Recomendação: {REC_LABELS[d['recommendation']]}",
              f"Justificativa: {d['justification']}",
              "Evidências:"]
     lines += [f"- {e['label']}: {e['evidence']}" for e in evidence]
@@ -408,7 +421,7 @@ def build_case_dossier(account_id: str) -> dict:
         lines.append("Ações propostas (só serão executadas com a aprovação do analista):")
         for a in d["proposed_actions"]:
             extra = a.get("reason") or (_brl(a["amount"]) if "amount" in a else "")
-            lines.append(f"- {a['action_id']} {a['type']} {a['target']}" + (f" ({extra})" if extra else ""))
+            lines.append(f"- {a['action_id']} {_action_text(a)}" + (f" ({extra})" if extra else ""))
     else:
         lines.append("Nenhuma ação proposta.")
     return {
@@ -468,7 +481,7 @@ def record_analyst_decision(account_id: str, approved: bool, analyst_name: str =
     # texto pronto para exibir: o agente copia este bloco em vez de resumir as ações
     lines = [f"Decisão registrada no caso CASO-{account_id[4:]}: "
              f"{'aprovado' if approved else 'rejeitado'} por {decided_by}."]
-    lines += [f"- {a['action_id']} ({a['type']}, {a['target']}): " + (a["effect"] if a["status"] == "executada" else "descartada")
+    lines += [f"- {a['action_id']} {_action_text(a)}: " + (a["effect"] if a["status"] == "executada" else "descartada")
               for a in effects]
     if not effects:
         lines.append("Não havia ações propostas para este caso.")

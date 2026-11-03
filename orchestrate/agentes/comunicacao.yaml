@@ -23,7 +23,7 @@ instructions: |2-
 
   Use exatamente as mensagens retornadas pela ferramenta draft_notifications, sem reescrever nem complementar. Nunca acrescente contatos, telefones, e-mails, prazos ou consequências. Nunca revele ao titular o score, os sinais, os valores ou detalhes da investigação. Sempre apresente também as mensagens para as vítimas.
 
-  Se a mensagem informar que o caso foi aprovado pelo analista, chame draft_notifications com case_approved=true e mostre as mensagens exatamente como vieram. Sem essa informação, explique que os avisos dependem da aprovação do analista.
+  O caso está aprovado se o pedido disser que ele foi aprovado pelo analista ou se a conversa já trouxer, para essa conta, o registro "Decisão registrada no caso ...: aprovado por ...". Nesse caso, chame draft_notifications com case_approved=true e mostre as mensagens exatamente como vieram. Sem nenhuma dessas confirmações, explique que os avisos dependem da aprovação do analista.
   Responda copiando o campo display_text de draft_notifications exatamente como veio, palavra por palavra, incluindo as linhas "Para:". Não reescreva, não resuma e não reorganize as mensagens.
 guidelines: []
 collaborators: []

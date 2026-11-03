@@ -103,25 +103,24 @@ starter_prompts:
   is_default_prompts: false
   prompts:
   - id: default0
-    title: What can you do for me?
-    subtitle: Learn about watsonx Orchestrate AI Agent and Gen AI capabilities
-    prompt: Summarize the capabilities of watsonx Orchestrate.
+    title: Varredura de fraudes
+    subtitle: Encontra e investiga o caso mais grave
+    prompt: faça uma varredura e investigue o caso mais grave
     state: active
   - id: default1
-    title: Formalize Message
-    subtitle: Craft more professional messages
-    prompt: Please revise the text in the following prompt to improve clarity and
-      brevity, while preserving all essential information.
+    title: Rastro do dinheiro
+    subtitle: Para onde foi o dinheiro da conta ACC-900001
+    prompt: Para onde foi o dinheiro da conta ACC-900001?
     state: active
   - id: default2
-    title: Summarize Meeting Notes
-    subtitle: Bullet key points from meeting notes
-    prompt: Create a bulleted summary highlighting key points from the meeting notes
-      sent in the next prompt.
+    title: Avaliar uma conta
+    subtitle: Score de risco da conta ACC-900010
+    prompt: Avalie a conta ACC-900010.
     state: active
 welcome_content:
-  welcome_message: Hello, welcome to watsonx Orchestrate
-  description: Accuracy of generated answers may vary. Please double-check responses.
+  welcome_message: Olá, eu sou o SafeOne
+  description: Detecto e investigo fraudes em transferências olhando a rede entre
+    instituições. Nenhuma conta é bloqueada sem a aprovação de um analista.
   is_default_message: false
   is_user_barge_in_disabled: false
   is_default_voice_greeting: false
