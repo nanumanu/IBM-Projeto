@@ -426,7 +426,12 @@ def draft_notifications(account_id: str, case_approved: bool) -> dict:
             msgs.append({"audience": "vitima", "account_id": d["src"], "message": (
                 f"Recebemos sua contestação da transferência de {_brl(d['amount'])}. A devolução foi "
                 f"solicitada e você será avisado assim que o valor voltar. {tip}")})
-    return {"messages": msgs}
+    # texto pronto para exibir: o agente copia este bloco em vez de remontar as mensagens
+    display = "\n\n".join(
+        f"Para: {'Titular' if m['audience'] == 'titular' else 'Vítima'} (conta {m['account_id']})\n{m['message']}"
+        for m in msgs
+    )
+    return {"messages": msgs, "display_text": display}
 
 
 # ----------------------------------------------------------------- Aprendizado
