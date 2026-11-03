@@ -228,10 +228,20 @@ def _network(w: dict, account_id: str, depth: int = 2) -> dict:
         outbound[t["dst"]] += t["amount"]
     total_in = sum(t["amount"] for t in inbound)
     total_out = sum(outbound.values())
+    def _forwarded_to(src: str) -> list[dict]:
+        # 2º salto: para quem cada destino repassou o dinheiro
+        sums = defaultdict(float)
+        for t in out_e[src]:
+            sums[t["dst"]] += t["amount"]
+        return [{"account_id": k, "institution": INSTITUTIONS[accs[k]["institution"]],
+                 "amount": round(v, 2), "account_age_days": (w["now"] - accs[k]["opened_at"]).days}
+                for k, v in sorted(sums.items(), key=lambda kv: -kv[1])]
+
     downstream = [
         {"account_id": d, "institution": INSTITUTIONS[accs[d]["institution"]],
          "received": round(v, 2), "account_age_days": (w["now"] - accs[d]["opened_at"]).days,
-         "forwarded_onward": round(sum(t["amount"] for t in out_e[d]), 2)}
+         "forwarded_onward": round(sum(t["amount"] for t in out_e[d]), 2),
+         "forwarded_to": _forwarded_to(d)}
         for d, v in sorted(outbound.items(), key=lambda kv: -kv[1])
     ]
     return {
