@@ -246,6 +246,17 @@ def _network(w: dict, account_id: str, depth: int = 2) -> dict:
          "forwarded_to": _forwarded_to(d)}
         for d, v in sorted(outbound.items(), key=lambda kv: -kv[1])
     ]
+    # frases prontas do rastro, para o agente não inverter quem enviou e quem recebeu
+    lines = []
+    for d in downstream:
+        line = f"{account_id} enviou {_brl(d['received'])} para {d['account_id']} ({d['institution']})"
+        if d["forwarded_to"]:
+            line += ", que repassou " + "; ".join(
+                f"{_brl(x['amount'])} para {x['account_id']} ({x['institution']})" for x in d["forwarded_to"])
+        else:
+            line += ", que não repassou adiante"
+        lines.append(line + ".")
+    trail_summary = " ".join(lines) or f"{account_id} não enviou dinheiro nas últimas 24h."
     return {
         "accounts_in_network": len(dist),
         "institutions_in_network": len({accs[a]["institution"] for a in dist}),
@@ -254,6 +265,7 @@ def _network(w: dict, account_id: str, depth: int = 2) -> dict:
         "outbound_total": round(total_out, 2),
         "estimated_remaining": round(max(0.0, total_in - total_out), 2),
         "money_trail": downstream,
+        "trail_summary": trail_summary,
     }
 
 
