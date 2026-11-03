@@ -370,7 +370,7 @@ def build_case_dossier(account_id: str) -> dict:
 
 
 @tool
-def record_analyst_decision(account_id: str, approved: bool, analyst_name: str) -> dict:
+def record_analyst_decision(account_id: str, approved: bool, analyst_name: str = "") -> dict:
     """Registra a decisão do analista humano sobre as ações propostas no dossiê.
 
     Use SOMENTE depois que o analista disser explicitamente na conversa que aprova ou
@@ -379,7 +379,8 @@ def record_analyst_decision(account_id: str, approved: bool, analyst_name: str) 
     Args:
         account_id (str): conta do caso, por exemplo ACC-900001.
         approved (bool): True se o analista aprovou as ações, False se rejeitou.
-        analyst_name (str): nome do analista que decidiu.
+        analyst_name (str): nome do analista que decidiu, se já foi dito na conversa.
+            Sem nome, a decisão fica registrada como "analista (nome não informado)".
 
     Returns:
         dict: status do caso e efeito de cada ação (executada ou descartada).
@@ -401,7 +402,7 @@ def record_analyst_decision(account_id: str, approved: bool, analyst_name: str) 
     return {
         "case_id": f"CASO-{account_id[4:]}",
         "status": "aprovado" if approved else "rejeitado",
-        "decided_by": analyst_name,
+        "decided_by": analyst_name.strip() or "analista (nome não informado)",
         "actions": effects,
         "amount_requested_back": round(returned, 2),
         "note": "Simulação da POC: o efeito é mostrado, mas não fica gravado entre conversas.",
