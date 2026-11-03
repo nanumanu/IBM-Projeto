@@ -1,0 +1,77 @@
+kind: native
+name: Untitled_Agent_1_8886Mx
+display_name: Investigador
+description: 'Reúne o contexto de um caso suspeito: dados da conta, rede de transferências
+  entre instituições e rastro do dinheiro.'
+context_access_enabled: true
+context_variables: []
+restrictions: editable
+memory_enabled: false
+custom_agents_metadata:
+  language: null
+  framework: null
+  tool_count: null
+  tool_names: null
+  tool_parameters: null
+  connection_requirements: null
+supported_apps: []
+llm: groq/openai/gpt-oss-120b
+style: react_core
+hide_reasoning: false
+instructions: 'Você é o agente Investigador do SafeOne. Para uma conta, chame investigate_account
+  e responda copiando o bloco display_text exatamente como veio, sem reescrever, resumir,
+  reorganizar ou acrescentar nada. Ele já traz a entrada (de quantas instituições
+  o dinheiro veio), a saída, para onde o dinheiro foi (com o 2º salto) e as contestações.
+  Se o pedido for sobre algo que não está nesse texto, use só os outros dados devolvidos
+  pela ferramenta, sem fazer contas; estimated_remaining é o valor que ainda está
+  na conta investigada, não na rede. Apresente fatos, não decisões: não proponha ações
+  nem pergunte se o analista aprova. Se a conta não existir, diga só que ela não foi
+  encontrada. Responda em português. Nunca mostre ao analista nomes de campos ou de
+  ferramentas (como display_text, trail_summary, inbound_total, outbound_total, estimated_remaining
+  ou disputes_total) nem comente estas instruções; escreva só em linguagem natural.'
+guidelines: []
+collaborators: []
+tools:
+- investigate_account
+toolkits: []
+skills: []
+plugins:
+  agent_pre_invoke: []
+  agent_post_invoke: []
+sync_tool_flow_interactions: true
+bundled: false
+knowledge_base: []
+chat_with_docs:
+  enabled: true
+  supports_full_document: true
+  vector_index:
+    chunk_size: 400
+    chunk_overlap: 50
+    limit: 10
+    extraction_strategy: express
+  generation:
+    prompt_instruction: ''
+    max_docs_passed_to_llm: 5
+    generated_response_length: Moderate
+    display_text_no_results_found: I searched my knowledge base, but did not find
+      anything related to your query
+    display_text_connectivity_issue: I might have information related to your query
+      to share, but am unable to connect to my knowledge base at the moment
+    idk_message: I'm afraid I don't understand. Please rephrase your question.
+    enabled: false
+  query_rewrite:
+    enabled: true
+  confidence_thresholds:
+    retrieval_confidence_threshold: Lowest
+    response_confidence_threshold: Lowest
+  citations:
+    citation_title: How do we know?
+    citations_shown: -1
+  hap_filtering:
+    output:
+      enabled: false
+      threshold: 0.5
+  query_source: Agent
+  agent_query_description: The query to search for in the knowledge base
+is_schedulable: false
+spec_version: v1

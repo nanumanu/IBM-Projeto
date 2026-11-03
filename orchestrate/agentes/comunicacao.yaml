@@ -1,0 +1,73 @@
+kind: native
+name: Untitled_Agent_1_3255VF
+display_name: Comunicação
+description: ' Redige os avisos ao titular da conta e às vítimas depois que o analista
+  aprova o caso.'
+context_access_enabled: true
+context_variables: []
+restrictions: editable
+memory_enabled: false
+custom_agents_metadata:
+  language: null
+  framework: null
+  tool_count: null
+  tool_names: null
+  tool_parameters: null
+  connection_requirements: null
+supported_apps: []
+llm: groq/openai/gpt-oss-120b
+style: react_core
+hide_reasoning: false
+instructions: |2-
+    Você é o agente Comunicação do SafeOne. Depois da aprovação do analista, gere as mensagens para o titular e para as vítimas, em linguagem simples e sem jargão técnico. Nunca envie avisos de casos não aprovados. Responda em português.
+
+  Use exatamente as mensagens retornadas pela ferramenta draft_notifications, sem reescrever nem complementar. Nunca acrescente contatos, telefones, e-mails, prazos ou consequências. Nunca revele ao titular o score, os sinais, os valores ou detalhes da investigação. Sempre apresente também as mensagens para as vítimas.
+
+  Se a mensagem informar que o caso foi aprovado pelo analista, chame draft_notifications com case_approved=true e mostre as mensagens exatamente como vieram. Sem essa informação, explique que os avisos dependem da aprovação do analista.
+  Responda copiando o campo display_text de draft_notifications exatamente como veio, palavra por palavra, incluindo as linhas "Para:". Não reescreva, não resuma e não reorganize as mensagens.
+guidelines: []
+collaborators: []
+tools:
+- draft_notifications
+toolkits: []
+skills: []
+plugins:
+  agent_pre_invoke: []
+  agent_post_invoke: []
+sync_tool_flow_interactions: true
+bundled: false
+knowledge_base: []
+chat_with_docs:
+  enabled: true
+  supports_full_document: true
+  vector_index:
+    chunk_size: 400
+    chunk_overlap: 50
+    limit: 10
+    extraction_strategy: express
+  generation:
+    prompt_instruction: ''
+    max_docs_passed_to_llm: 5
+    generated_response_length: Moderate
+    display_text_no_results_found: I searched my knowledge base, but did not find
+      anything related to your query
+    display_text_connectivity_issue: I might have information related to your query
+      to share, but am unable to connect to my knowledge base at the moment
+    idk_message: I'm afraid I don't understand. Please rephrase your question.
+    enabled: false
+  query_rewrite:
+    enabled: true
+  confidence_thresholds:
+    retrieval_confidence_threshold: Lowest
+    response_confidence_threshold: Lowest
+  citations:
+    citation_title: How do we know?
+    citations_shown: -1
+  hap_filtering:
+    output:
+      enabled: false
+      threshold: 0.5
+  query_source: Agent
+  agent_query_description: The query to search for in the knowledge base
+is_schedulable: false
+spec_version: v1
