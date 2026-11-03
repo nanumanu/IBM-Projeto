@@ -1,8 +1,8 @@
 # SafeOne no watsonx Orchestrate
 
 Ferramentas Python e configuração dos agentes do SafeOne no watsonx Orchestrate (instância
-de Frankfurt, eu-de). É a versão usada enquanto o Code Engine não é liberado: os dados são
-sintéticos e recriados a cada chamada, sem depender da API.
+de Frankfurt, eu-de). É a versão do projeto usada no hackathon: as ferramentas rodam dentro do
+Orchestrate, com dados sintéticos recriados a cada chamada, sem depender de servidor externo.
 
 | Arquivo | O que é |
 | --- | --- |
@@ -88,6 +88,7 @@ Também testadas, cada uma numa conversa nova: `Para onde foi o dinheiro da cont
 ## Limitações para explicar na apresentação
 
 - Cada chamada recria os dados sintéticos, então decisões e feedback não ficam gravados
-  entre conversas. Na API completa (Code Engine) eles ficam no banco.
-- Aqui a aprovação humana é garantida pelas instruções dos agentes e pelo fluxo. Na API
-  completa ela é garantida por chave: o agente recebe 403 se tentar decidir.
+  entre conversas. Numa versão de produção eles ficariam num banco de dados.
+- A aprovação humana é garantida pelas instruções dos agentes e pelo fluxo. Numa versão de
+  produção ela seria garantida também por permissão: a API na raiz deste repositório mostra
+  como, com só a chave do analista podendo executar ações (o agente recebe 403).

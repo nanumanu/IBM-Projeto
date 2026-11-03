@@ -1,5 +1,11 @@
 # SafeOne API
 
+> **Versão usada no hackathon:** os agentes no watsonx Orchestrate, na pasta
+> [`orchestrate/`](orchestrate/README.md), com as ferramentas em Python rodando dentro do
+> próprio Orchestrate. Esta API não está publicada (o deploy no Code Engine descrito abaixo não
+> é usado); ela fica como referência de como a aprovação humana seria garantida por permissão
+> numa versão de produção.
+
 Serviços que os agentes do SafeOne chamam como ferramentas no **watsonx Orchestrate**, para
 identificar, prevenir e responder a fraudes em pagamentos olhando o padrão **de rede**: uma
 conta que recebe de 14 instituições em duas horas parece normal para cada banco isoladamente,
