@@ -399,12 +399,23 @@ def record_analyst_decision(account_id: str, approved: bool, analyst_name: str =
             effects.append({**a, "status": "executada",
                             "effect": f"Devolução de {_brl(a['amount'])} solicitada à instituição de destino."})
     returned = sum(a.get("amount", 0) for a in effects if a["status"] == "executada")
+    decided_by = analyst_name.strip() or "analista (nome não informado)"
+    # texto pronto para exibir: o agente copia este bloco em vez de resumir as ações
+    lines = [f"Decisão registrada no caso CASO-{account_id[4:]}: "
+             f"{'aprovado' if approved else 'rejeitado'} por {decided_by}."]
+    lines += [f"- {a['action_id']} ({a['type']}, {a['target']}): " + (a["effect"] if a["status"] == "executada" else "descartada")
+              for a in effects]
+    if not effects:
+        lines.append("Não havia ações propostas para este caso.")
+    if approved and returned:
+        lines.append(f"Total de devolução solicitado: {_brl(returned)}.")
     return {
         "case_id": f"CASO-{account_id[4:]}",
         "status": "aprovado" if approved else "rejeitado",
-        "decided_by": analyst_name.strip() or "analista (nome não informado)",
+        "decided_by": decided_by,
         "actions": effects,
         "amount_requested_back": round(returned, 2),
+        "display_text": "\n".join(lines),
         "note": "Simulação da POC: o efeito é mostrado, mas não fica gravado entre conversas.",
     }
 
