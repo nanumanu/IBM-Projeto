@@ -108,6 +108,9 @@ def avaliar(pasta: pathlib.Path) -> list[tuple[str, bool, str]]:
                   "sem a lista de efeitos"))
     r.append(("[extra] Rastro só com o Investigador", set(t5["ferramentas"]) == {"investigate_account"},
               f"chamou {t5['ferramentas']}"))
+    if len(fluxo) >= 5:
+        r.append(("[extra] Feedback com vírgula decimal", "63,2" in fluxo[4]["resposta"]
+                  and "63.2" not in fluxo[4]["resposta"], "o score apareceu com ponto decimal"))
     r.append(("[extra] Rastro sem pedir aprovação", not algum(a, "aprova ou rejeita", "aprovar ou rejeitar"),
               "pediu aprovação sem dossiê"))
     respostas = [x["resposta"] for nome in ("t1", "t4", "t5", "t6") for x in turnos(pasta / f"{nome}.txt")]

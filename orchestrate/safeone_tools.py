@@ -52,6 +52,10 @@ def _brl(v: float) -> str:
     return f"R$ {s}"
 
 
+def _num(v: float) -> str:
+    return f"{v:g}".replace(".", ",")
+
+
 def _clamp(x: float) -> float:
     return max(0.0, min(1.0, x))
 
@@ -207,8 +211,7 @@ def score_account(account_id: str) -> dict:
     _check_account(w, account_id)
     r = _assess(w, account_id)
     # texto pronto para o agente copiar, já com a conclusão
-    score = f"{r['score']:g}".replace(".", ",")
-    lines = [f"Score de risco da conta {account_id}: {score}/100 (limiar {THRESHOLD:g}).", "Sinais ativos:"]
+    lines = [f"Score de risco da conta {account_id}: {_num(r['score'])}/100 (limiar {THRESHOLD:g}).", "Sinais ativos:"]
     lines += [f"- {s}" for s in r["active_signals"]] or ["- nenhum"]
     if r["above_threshold"]:
         lines.append("Acima do limiar: a conta deve ser investigada antes de qualquer ação.")
@@ -532,7 +535,8 @@ def record_feedback(account_id: str, was_fraud: bool) -> dict:
         was_fraud (bool): True se o analista confirmou fraude, False se era legítimo.
 
     Returns:
-        dict: peso antes e depois de cada sinal ajustado e o novo score da conta.
+        dict: peso antes e depois de cada sinal ajustado, o novo score da conta e
+        display_text, o texto pronto para mostrar ao analista.
     """
     w = _build_world()
     _check_account(w, account_id)
@@ -544,12 +548,23 @@ def record_feedback(account_id: str, was_fraud: bool) -> dict:
         if s["value"] >= 0.5:
             new_w[s["name"]] = round(max(5.0, min(60.0, WEIGHTS[s["name"]] * factor)), 2)
             changes[s["label"]] = {"before": WEIGHTS[s["name"]], "after": new_w[s["name"]]}
-    new_score = 100 * sum(new_w[s["name"]] * s["value"] for s in risk["signals"]) / sum(new_w.values())
+    new_score = round(100 * sum(new_w[s["name"]] * s["value"] for s in risk["signals"]) / sum(new_w.values()), 1)
+    # texto pronto para o agente copiar, com vírgula decimal
+    lines = [f"Feedback registrado no caso CASO-{account_id[4:]}: "
+             + ("fraude confirmada." if was_fraud else "falso positivo (conta legítima)."),
+             f"Score da conta: {_num(risk['score'])} antes, {_num(new_score)} depois."]
+    if changes:
+        lines.append("Pesos dos sinais que mudaram (" + ("sobem" if was_fraud else "caem")
+                     + " 10% " + ("numa fraude confirmada" if was_fraud else "num falso positivo") + "):")
+        lines += [f"- {k}: {_num(v['before'])} → {_num(v['after'])}" for k, v in changes.items()]
+    else:
+        lines.append("Nenhum sinal pesou o bastante neste caso para mudar de peso.")
     return {
         "case_id": f"CASO-{account_id[4:]}",
         "label": "fraude" if was_fraud else "legitimo",
         "weight_changes": changes,
         "score_before": risk["score"],
-        "score_after_learning": round(new_score, 1),
+        "score_after_learning": new_score,
         "note": "Simulação da POC: os novos pesos valem para esta análise e não ficam gravados.",
+        "display_text": "\n".join(lines),
     }
