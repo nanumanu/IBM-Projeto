@@ -42,7 +42,15 @@ orchestrate agents import -f agentes/sentinela.yaml
 ```
 
 Para recriar todos os agentes, importe os 5 colaboradores antes do `safeone.yaml`, que
-depende deles. Se alguém mudar um agente pela interface, exporte de novo para manter
+depende deles.
+
+A importação muda só o rascunho (Draft), que é o que o chat de Preview e os testes usam. Para
+a mudança chegar à tela de Chat do Orchestrate, publique de novo, também com os colaboradores
+antes do SafeOne:
+
+```powershell
+orchestrate agents deploy -n <nome interno>
+``` Se alguém mudar um agente pela interface, exporte de novo para manter
 esta pasta em dia:
 
 ```powershell
