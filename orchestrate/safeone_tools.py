@@ -145,7 +145,8 @@ def _assess(w: dict, account_id: str) -> dict:
                          f"Repassou {ratio:.0%} do que recebeu (entrou {_brl(inflow)}, saiu {_brl(outflow)})."),
         "new_account": (1.0 if age < 30 else 0.5 if age < 90 else 0.0, f"Conta aberta há {age} dias."),
         "disputes": (_clamp(n_disp / 3), f"{n_disp} transferência(s) recebida(s) contestada(s)."),
-        "inbound_spike": (_clamp((spike - 3) / 7), f"Entrada {spike:.1f}x acima do normal da conta."),
+        "inbound_spike": (_clamp((spike - 3) / 7),
+                          f"Entrada {spike:.1f}".replace(".", ",") + "x acima do normal da conta."),
     }
     score = 100 * sum(WEIGHTS[k] * v for k, (v, _) in signals.items()) / sum(WEIGHTS.values())
     return {
@@ -199,14 +200,38 @@ def score_account(account_id: str) -> dict:
         account_id (str): identificador da conta, por exemplo ACC-900001.
 
     Returns:
-        dict: score, limiar e a lista de sinais com intensidade, peso e evidência.
+        dict: score, limiar, a lista de sinais com intensidade, peso e evidência e
+        display_text, o texto pronto para mostrar ao analista.
     """
     w = _build_world()
     _check_account(w, account_id)
-    return _assess(w, account_id)
+    r = _assess(w, account_id)
+    # texto pronto para o agente copiar, já com a conclusão
+    score = f"{r['score']:g}".replace(".", ",")
+    lines = [f"Score de risco da conta {account_id}: {score}/100 (limiar {THRESHOLD:g}).", "Sinais ativos:"]
+    lines += [f"- {s}" for s in r["active_signals"]] or ["- nenhum"]
+    if r["above_threshold"]:
+        lines.append("Acima do limiar: a conta deve ser investigada antes de qualquer ação.")
+    else:
+        lines.append("Abaixo do limiar: nenhum caso aberto, nenhuma ação recomendada.")
+    return {**r, "display_text": "\n".join(lines)}
 
 
 # ----------------------------------------------------------------- Investigador
+def _trail_lines(account_id: str, downstream: list[dict]) -> list[str]:
+    # frases prontas do rastro, para o agente não inverter quem enviou e quem recebeu
+    lines = []
+    for d in downstream:
+        line = f"{account_id} enviou {_brl(d['received'])} para {d['account_id']} ({d['institution']})"
+        if d["forwarded_to"]:
+            line += ", que repassou " + "; ".join(
+                f"{_brl(x['amount'])} para {x['account_id']} ({x['institution']})" for x in d["forwarded_to"])
+        else:
+            line += ", que não repassou adiante"
+        lines.append(line + ".")
+    return lines
+
+
 def _network(w: dict, account_id: str, depth: int = 2) -> dict:
     since = w["now"] - timedelta(hours=24)
     txs = [t for t in w["txs"] if t["at"] > since]
@@ -246,17 +271,7 @@ def _network(w: dict, account_id: str, depth: int = 2) -> dict:
          "forwarded_to": _forwarded_to(d)}
         for d, v in sorted(outbound.items(), key=lambda kv: -kv[1])
     ]
-    # frases prontas do rastro, para o agente não inverter quem enviou e quem recebeu
-    lines = []
-    for d in downstream:
-        line = f"{account_id} enviou {_brl(d['received'])} para {d['account_id']} ({d['institution']})"
-        if d["forwarded_to"]:
-            line += ", que repassou " + "; ".join(
-                f"{_brl(x['amount'])} para {x['account_id']} ({x['institution']})" for x in d["forwarded_to"])
-        else:
-            line += ", que não repassou adiante"
-        lines.append(line + ".")
-    trail_summary = " ".join(lines) or f"{account_id} não enviou dinheiro nas últimas 24h."
+    trail_summary = " ".join(_trail_lines(account_id, downstream)) or f"{account_id} não enviou dinheiro nas últimas 24h."
     return {
         "accounts_in_network": len(dist),
         "institutions_in_network": len({accs[a]["institution"] for a in dist}),
@@ -280,19 +295,47 @@ def investigate_account(account_id: str) -> dict:
         account_id (str): identificador da conta, por exemplo ACC-900001.
 
     Returns:
-        dict: dados da conta, resumo da rede em 24h, rastro do dinheiro e contestações.
+        dict: dados da conta, resumo da rede em 24h, rastro do dinheiro, contestações e
+        display_text, o texto pronto para mostrar ao analista.
     """
     w = _build_world()
     _check_account(w, account_id)
     a = w["accounts"][account_id]
+    net = _network(w, account_id)
+    disputes = [{"transaction_id": d["transaction_id"], "amount": d["amount"], "reason": d["reason"]}
+                for d in w["disputes"] if d["dst"] == account_id]
+    disputes_total = round(sum(d["amount"] for d in disputes), 2)
+
+    # texto pronto para o agente copiar, sem refazer contas nem inverter a direção do dinheiro
+    n_src = net["source_institutions"]
+    lines = [f"Rastro do dinheiro da conta {account_id} (últimas 24h)"]
+    if net["inbound_total"]:
+        origem = "1 instituição" if n_src == 1 else f"{n_src} instituições diferentes"
+        lines.append(f"Entrada: {_brl(net['inbound_total'])} recebidos de {origem}.")
+    else:
+        lines.append("Entrada: nenhum recebimento nas últimas 24h.")
+    if net["outbound_total"]:
+        saida = f"Saída: {_brl(net['outbound_total'])} enviados para outras contas"
+        if net["estimated_remaining"]:
+            saida += f"; restam cerca de {_brl(net['estimated_remaining'])} na conta"
+        lines.append(saida + ".")
+    trail = _trail_lines(account_id, net["money_trail"])
+    lines += [f"- {x}" for x in trail] or [f"{account_id} não enviou dinheiro nas últimas 24h."]
+    if len(disputes) == 1:
+        lines.append(f"Contestações: 1 transferência recebida contestada, de {_brl(disputes_total)}.")
+    elif disputes:
+        lines.append(f"Contestações: {len(disputes)} transferências recebidas contestadas, "
+                     f"total de {_brl(disputes_total)}.")
+    else:
+        lines.append("Contestações: nenhuma transferência recebida foi contestada.")
     return {
         "account": {"account_id": account_id, "holder": a["holder"], "holder_type": a["type"],
                     "institution": INSTITUTIONS[a["institution"]],
                     "account_age_days": (w["now"] - a["opened_at"]).days},
-        "network": _network(w, account_id),
-        "disputes": [{"transaction_id": d["transaction_id"], "amount": d["amount"], "reason": d["reason"]}
-                     for d in w["disputes"] if d["dst"] == account_id],
-        "disputes_total": round(sum(d["amount"] for d in w["disputes"] if d["dst"] == account_id), 2),
+        "network": net,
+        "disputes": disputes,
+        "disputes_total": disputes_total,
+        "display_text": "\n".join(lines),
     }
 
 
