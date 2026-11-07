@@ -113,12 +113,6 @@ documentação do ADK, que muda com frequência.
 Os agentes recebem só a **chave de agente**. `decide_case` e `submit_feedback` exigem a chave
 de analista e devem ficar na interface do analista, não com os agentes.
 
-## watsonx.ai (opcional)
-
-Com `WATSONX_API_KEY` e `WATSONX_PROJECT_ID` definidos, a narrativa do dossiê é redigida por
-um modelo Granite a partir dos fatos do caso. Sem eles (ou se a chamada falhar), usa texto de
-template, então a demo nunca depende da disponibilidade do modelo.
-
 ## Estrutura
 
 ```
