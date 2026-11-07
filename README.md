@@ -44,30 +44,6 @@ e `dev-analyst-key`). Na primeira execução o banco é populado com dados sint�
 
 Testes: `pytest -q`
 
-## Dados sintéticos e roteiro da demo
-
-326 contas em 14 instituições fictícias, ~3.300 transferências nos últimos 7 dias e três
-cenários plantados (horários relativos ao momento em que a API sobe):
-
-| Conta | Cenário | Resultado esperado |
-|---|---|---|
-| `ACC-900001` | Conta-laranja: aberta há 6 dias, recebe de 14 instituições em ~1h, repassa 90% para `ACC-900002`/`ACC-900003`, que repassam adiante. 4 contestações. | Score 100, recomenda bloquear e pedir devolução |
-| `ACC-900010` | Padaria antiga que recebe de muitas instituições todo dia | Sinal de rede alto, mas **não abre caso** |
-| `ACC-900020` | República: conta nova que recebe o aluguel de 6 moradores e paga o dono | Abre caso (score 65), analista rejeita: falso positivo que ensina o sistema |
-
-Roteiro sugerido (todos os passos estão no Swagger):
-
-1. `POST /monitoring/scan` — Sentinela encontra os dois casos.
-2. `GET /accounts/ACC-900001/network` — Investigador mostra 14 instituições de origem e o rastro do dinheiro.
-3. `POST /cases/{id}/dossier` — Decisão gera evidências, justificativa e ações propostas.
-4. `POST /cases/{id}/decision` com a **chave de agente** → `403`. O agente não decide sozinho.
-5. Mesma chamada com a **chave de analista** → conta bloqueada, devoluções solicitadas.
-6. `POST /transactions` saindo de `ACC-900001` → retida (`held: true`).
-7. `POST /cases/{id}/notifications` — mensagens para o titular e para as 4 vítimas.
-8. `POST /cases/{id}/feedback` com `fraud`; no caso da república, `reject` + `legit`.
-9. `GET /learning/weights` e `GET /metrics` — pesos ajustados, precisão, valor devolvido.
-
-Para reiniciar a demo: `POST /admin/reset-demo` (chave de analista).
 
 ## Ferramentas por agente
 
