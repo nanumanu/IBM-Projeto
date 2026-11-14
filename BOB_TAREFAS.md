@@ -26,7 +26,7 @@ Para não atribuir ao Bob o que outra ferramenta fez:
 
 **Atualização (14/11/2026).** As tarefas 1, 2, 3 e 4 foram feitas com o Claude Code dentro da
 IDE do IBM Bob, a pedido da operadora, com autorização da organização do hackathon para usar o
-prefixo `Bob:` nos commits (`30ed686`, `f47c4c9`, `e424994` e `a749f54`). Não há capturas da
+prefixo `Bob:` nos commits (`d768866`, `e4686f9`, `dee579a` e `094bcaf`). Não há capturas da
 interface do Bob para essas tarefas.
 
 ## Regras para todas as tarefas
