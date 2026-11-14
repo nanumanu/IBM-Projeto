@@ -26,6 +26,7 @@ WEIGHTS = {
     "disputes": 15.0,
     "inbound_spike": 10.0,
 }
+RULES_VERSION = "2026.11-v2"  # versão das regras de score, gravada nos registros de auditoria
 SIGNAL_LABELS = {
     "network_fan_in": "Padrão de rede (muitas instituições de origem)",
     "pass_through": "Repasse rápido do dinheiro",
@@ -534,6 +535,84 @@ def draft_notifications(account_id: str, case_approved: bool) -> dict:
         for m in msgs
     )
     return {"messages": msgs, "display_text": display}
+
+
+@tool
+def build_audit_record(account_id: str, approved: bool, analyst_name: str = "") -> dict:
+    """Gera o registro padronizado de auditoria de um caso já decidido pelo analista.
+
+    Use SOMENTE depois que a decisão do analista (aprovação ou rejeição) já foi registrada
+    na conversa. O registro é interno, para auditoria: traz score, evidências e pesos dos
+    sinais, que nunca podem ser enviados nem mostrados ao titular da conta ou às vítimas.
+
+    Args:
+        account_id (str): conta do caso, por exemplo ACC-900001.
+        approved (bool): True se o analista aprovou as ações, False se rejeitou.
+        analyst_name (str): nome do analista que decidiu, se já foi dito na conversa.
+            Sem nome, o registro sai com "analista (nome não informado)".
+
+    Returns:
+        dict: registro de auditoria com decisão, quem decidiu, data e hora em UTC, score e
+        limiar, recomendação do dossiê, evidências, ações com o status final, total de
+        devolução solicitado, versão das regras e pesos dos sinais, além de display_text,
+        o texto pronto para mostrar ao analista. Se a conta não tiver caso aberto, devolve
+        só um campo error.
+    """
+    w = _build_world()
+    _check_account(w, account_id)
+    d = _dossier(w, account_id)
+    risk = d["risk"]
+    if not risk["above_threshold"]:
+        return {"error": f"A conta {account_id} não tem caso aberto; nenhum registro de auditoria foi gerado."}
+    # mesmo efeito de record_analyst_decision: executada se aprovado, descartada se rejeitado
+    actions = []
+    for a in d["proposed_actions"]:
+        if not approved:
+            actions.append({**a, "status": "descartada"})
+        elif a["type"] == "bloquear_conta":
+            actions.append({**a, "status": "executada",
+                            "effect": "Conta bloqueada; novas transferências de ou para ela ficam retidas."})
+        else:
+            actions.append({**a, "status": "executada",
+                            "effect": f"Devolução de {_brl(a['amount'])} solicitada à instituição de destino."})
+    returned = round(sum(a.get("amount", 0) for a in actions if a["status"] == "executada"), 2)
+    decision = "aprovado" if approved else "rejeitado"
+    decided_by = analyst_name.strip() or "analista (nome não informado)"
+    decided_at = w["now"].replace(tzinfo=timezone.utc).isoformat()
+    evidence = [{"label": s["label"], "evidence": s["evidence"]} for s in risk["signals"] if s["value"] > 0]
+    weights = dict(WEIGHTS)
+    # texto pronto para exibir: uma informação por linha, para o agente copiar sem resumir
+    lines = [f"Registro de auditoria do caso CASO-{account_id[4:]} (conta {account_id})",
+             f"Decisão: {decision} por {decided_by}",
+             f"Data e hora (UTC): {decided_at}",
+             f"Score de risco: {_num(risk['score'])}/100 (limiar {_num(THRESHOLD)})",
+             f"Recomendação do dossiê: {REC_LABELS[d['recommendation']]}",
+             "Evidências:"]
+    lines += [f"- {e['label']}: {e['evidence']}" for e in evidence]
+    lines.append("Ações:")
+    lines += [f"- {a['action_id']} {_action_text(a)}: {a['status']}" for a in actions]
+    lines.append(f"Total de devolução solicitado: {_brl(returned)}")
+    lines.append(f"Versão das regras: {RULES_VERSION}")
+    lines.append("Pesos dos sinais:")
+    lines += [f"- {SIGNAL_LABELS[k]}: {_num(v)}" for k, v in weights.items()]
+    lines.append("Uso interno, para auditoria: não enviar ao titular da conta nem às vítimas.")
+    return {
+        "case_id": f"CASO-{account_id[4:]}",
+        "account_id": account_id,
+        "decision": decision,
+        "decided_by": decided_by,
+        "decided_at": decided_at,
+        "score": risk["score"],
+        "threshold": THRESHOLD,
+        "recommendation": d["recommendation"],
+        "evidence": evidence,
+        "actions": actions,
+        "amount_requested_back": returned,
+        "rules_version": RULES_VERSION,
+        "signal_weights": weights,
+        "display_text": "\n".join(lines),
+        "note": "Simulação da POC: o registro é mostrado, mas não fica gravado entre conversas.",
+    }
 
 
 # ----------------------------------------------------------------- Aprendizado
