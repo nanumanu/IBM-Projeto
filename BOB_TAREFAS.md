@@ -7,6 +7,23 @@ e as capturas de tela que servem de evidência.
 O código e os documentos destas tarefas devem ser escritos **pelo Bob**. Este arquivo só
 prepara o trabalho; a revisão, os testes e a integração vêm depois.
 
+## Registro de uso do IBM Bob
+
+Relato do grupo: a IDE do IBM Bob foi usada no projeto de duas formas.
+
+- **Perguntas ao Bob.** O grupo fez perguntas ao Bob sobre o código e o projeto durante o
+  desenvolvimento.
+- **Desenvolvimento com o Claude Code dentro da IDE do Bob.** O Claude Code foi usado conectado
+  dentro da IDE do Bob, e as duas ferramentas apoiaram juntas o desenvolvimento.
+
+Para não atribuir ao Bob o que outra ferramenta fez:
+
+- este arquivo (`BOB_TAREFAS.md`) foi escrito pelo Claude Code;
+- até o último commit deste arquivo, o branch `bob` não tem nenhum commit `Bob:` nem capturas
+  em `docs/evidencias-bob/`. As 4 tarefas abaixo continuam pendentes;
+- o que o Bob produzir nas tarefas abaixo entra com o prefixo `Bob:` e com as capturas de
+  tela, e só isso conta como trabalho do Bob no relatório e na submissão.
+
 ## Regras para todas as tarefas
 
 1. **Trabalhe só no branch `bob`.** Antes de abrir o Bob:
