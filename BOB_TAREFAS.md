@@ -24,6 +24,11 @@ Para não atribuir ao Bob o que outra ferramenta fez:
 - o que o Bob produzir nas tarefas abaixo entra com o prefixo `Bob:` e com as capturas de
   tela, e só isso conta como trabalho do Bob no relatório e na submissão.
 
+**Atualização (14/11/2026).** As tarefas 1, 2, 3 e 4 foram feitas com o Claude Code dentro da
+IDE do IBM Bob, a pedido da operadora, com autorização da organização do hackathon para usar o
+prefixo `Bob:` nos commits (`30ed686`, `f47c4c9`, `e424994` e `a749f54`). Não há capturas da
+interface do Bob para essas tarefas.
+
 ## Regras para todas as tarefas
 
 1. **Trabalhe só no branch `bob`.** Antes de abrir o Bob:
